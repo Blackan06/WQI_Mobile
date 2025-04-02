@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:go_router/go_router.dart';
+import 'login_screen.dart';
+import '../main.dart';
 
 // Màn hình Giám sát chất lượng nước
 class WaterQualityScreen extends StatefulWidget {
@@ -80,48 +82,60 @@ class _WaterQualityScreenState extends State<WaterQualityScreen> {
           'Giám sát chất lượng nước',
           style: TextStyle(color: Colors.blueAccent),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              // Nếu cần xoá thông tin đăng nhập được lưu trữ (ví dụ: SharedPreferences)
+              // Sau đó điều hướng về màn hình đăng nhập:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => MyApp()),
+              );
+            },
+          ),
+        ],
         backgroundColor: Colors.black,
       ),
-      body:
-          _isLoading
-              ? Center(child: CircularProgressIndicator())
-              : _latestData == null
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator())
+          : _latestData == null
               ? Center(
-                child: Text(
-                  'Không có dữ liệu',
-                  style: TextStyle(color: Colors.white),
-                ),
-              )
+                  child: Text(
+                    'Không có dữ liệu',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                )
               : Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: GridView.count(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  children: [
-                    _buildDataCard(
-                      'pH',
-                      _latestData!['ph'].toStringAsFixed(2),
-                      Colors.blueAccent,
-                    ),
-                    _buildDataCard(
-                      'Temperature',
-                      _latestData!['temperature'].toStringAsFixed(2),
-                      Colors.orange,
-                    ),
-                    _buildDataCard(
-                      'WQI',
-                      _latestData!['wqi'].toStringAsFixed(2),
-                      Colors.green,
-                    ),
-                    _buildDataCard(
-                      'Time',
-                      _latestData!['measurement_time'].toString(),
-                      Colors.purple,
-                    ),
-                  ],
+                  padding: const EdgeInsets.all(16.0),
+                  child: GridView.count(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    children: [
+                      _buildDataCard(
+                        'pH',
+                        _latestData!['ph'].toStringAsFixed(2),
+                        Colors.blueAccent,
+                      ),
+                      _buildDataCard(
+                        'Temperature',
+                        _latestData!['temperature'].toStringAsFixed(2),
+                        Colors.orange,
+                      ),
+                      _buildDataCard(
+                        'WQI',
+                        _latestData!['wqi'].toStringAsFixed(2),
+                        Colors.green,
+                      ),
+                      _buildDataCard(
+                        'Time',
+                        _latestData!['measurement_time'].toString(),
+                        Colors.purple,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
     );
   }
 

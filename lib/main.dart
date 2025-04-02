@@ -1,83 +1,108 @@
-import 'dart:io'; // Cần thêm import này
+import 'dart:io';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'navigation/app_router.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'blocs/authentication/authentication_bloc.dart';
+import 'repositories/authentication_repository.dart';
+import 'noti_service.dart';
+import 'screens/login_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  await NotiService().initNotification();
 
-  // Yêu cầu quyền thông báo cho người dùng
+  // Yêu cầu quyền thông báo
   FirebaseMessaging messaging = FirebaseMessaging.instance;
-
   NotificationSettings settings = await messaging.requestPermission(
     alert: true,
     badge: true,
     sound: true,
   );
-
   print('User granted permission: ${settings.authorizationStatus}');
 
-  String personID = "your-person-id"; // Bạn cần khai báo personID
-
+  // Đăng ký subscribe topic dựa vào personID
+  String personID = "1";
   if (Platform.isIOS) {
-    // Lấy APNS token
     String? apnsToken = await messaging.getAPNSToken();
     if (apnsToken != null) {
-      // Đăng ký theo chủ đề nếu APNS token có giá trị
       await messaging.subscribeToTopic(personID);
     } else {
-      // Chờ đợi 3 giây nếu APNS token vẫn chưa có
-      await Future<void>.delayed(const Duration(seconds: 3));
+      await Future.delayed(const Duration(seconds: 3));
       apnsToken = await messaging.getAPNSToken();
       if (apnsToken != null) {
         await messaging.subscribeToTopic(personID);
       }
     }
   } else {
-    // Đăng ký theo chủ đề nếu không phải trên iOS
     await messaging.subscribeToTopic(personID);
   }
 
-  // Lấy FCM token
-  String? token = await messaging.getToken();
-  print('FCM Device Token: $token'); // In device token ra console
-
-  // Lắng nghe thông báo khi ứng dụng đang ở chế độ foreground
+  // Lắng nghe thông báo khi ứng dụng ở foreground
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
     print(
-      'Received a message while in the foreground: ${message.notification?.title}, ${message.notification?.body}',
+        'Foreground message: ${message.notification?.title}, ${message.notification?.body}');
+    NotiService().showNotification(
+      title: message.notification?.title,
+      body: message.notification?.body,
     );
-    // Bạn có thể xử lý thông báo tại đây, chẳng hạn như hiển thị một Snackbar hoặc Dialog
   });
 
-  // Lắng nghe khi người dùng nhấn vào thông báo
   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-    print('Opened app via notification: ${message.notification?.title}');
-    // Điều hướng đến màn hình tương ứng trong ứng dụng của bạn
+    print('Opened via notification: ${message.notification?.title}');
   });
 
-  // Lắng nghe thông báo khi ứng dụng ở chế độ nền hoặc bị đóng
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   runApp(MyApp());
 }
 
-// Hàm xử lý thông báo khi ứng dụng ở chế độ nền
+// Xử lý thông báo ở chế độ background
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  print('Handling a background message: ${message.notification?.title}');
-  // Bạn có thể xử lý các thông báo ở đây
+  print('Background message: ${message.notification?.title}');
+  NotiService().showNotification(
+    title: message.notification?.title,
+    body: message.notification?.body,
+  );
+}
+
+// Hàm gọi API đăng ký token
+Future<void> registerDeviceToken(String token, int user_id) async {
+  final url = Uri.parse('https://dm.anhkiet.xyz/register-token');
+  final data = {'device_token': token, 'user_id': user_id};
+  print('Gửi lên Server data: $data');
+  final response = await http.post(
+    url,
+    headers: {'Content-Type': 'application/json'},
+    body: json.encode(data),
+  );
+  print('Server response: ${response.body}');
+  if (response.statusCode == 200) {
+    print('Device token registered successfully');
+  } else {
+    print(
+        'Failed to register device token. Status code: ${response.statusCode}');
+  }
 }
 
 class MyApp extends StatelessWidget {
+  MyApp({Key? key}) : super(key: key);
+
+  final AuthenticationRepository authRepository = AuthenticationRepository();
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'Persistent Bottom Navigation with GoRouter',
+    return MaterialApp(
+      title: 'Login ',
       theme: ThemeData.dark(),
-      routerConfig: AppRouter.router,
+      // Khởi tạo LoginScreen ban đầu với BlocProvider
+      home: BlocProvider(
+        create: (context) => AuthenticationBloc(authRepository: authRepository),
+        child: const LoginScreen(),
+      ),
     );
   }
 }
