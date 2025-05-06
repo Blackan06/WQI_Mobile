@@ -16,16 +16,38 @@ class AuthenticationLoading extends AuthenticationState {}
 
 // Đăng nhập thành công
 class AuthenticationSuccess extends AuthenticationState {
+  final String accessToken;
   final int userId;
 
-  AuthenticationSuccess(this.userId);
+  const AuthenticationSuccess({
+    required this.accessToken,
+    required this.userId,
+  });
+
+  @override
+  List<Object> get props => [accessToken, userId];
+
+  AuthenticationSuccess copyWith({
+    String? accessToken,
+    int? userId,
+  }) {
+    return AuthenticationSuccess(
+      accessToken: accessToken ?? this.accessToken,
+      userId: userId ?? this.userId,
+    );
+  }
 }
 
 // Đăng nhập thất bại
 class AuthenticationFailure extends AuthenticationState {
-  final String error;
-  const AuthenticationFailure(this.error);
+  final String message;
+  final int? statusCode;
+
+  const AuthenticationFailure({
+    required this.message,
+    this.statusCode,
+  });
 
   @override
-  List<Object?> get props => [error];
+  List<Object?> get props => [message, statusCode];
 }

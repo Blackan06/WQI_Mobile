@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:math'; // Thêm import Random
+import 'dart:async'; // Thêm import Timer
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:go_router/go_router.dart';
@@ -14,6 +16,22 @@ class WaterQualityScreen extends StatefulWidget {
 class _WaterQualityScreenState extends State<WaterQualityScreen> {
   Map<String, dynamic>? _latestData;
   bool _isLoading = false;
+  final Random _random = Random();
+  Timer? _timer; // Timer để tự động cập nhật
+
+  // Hàm tạo dữ liệu random
+  Map<String, dynamic> _generateRandomData() {
+    double ph = 6.0 + _random.nextDouble() * 3.0; // pH từ 6.0-9.0
+    double temp = 25.0 + _random.nextDouble() * 5.0; // nhiệt độ từ 25-30°C
+    double wqi = calculateWQI(ph, temp);
+
+    return {
+      'ph': ph,
+      'temperature': temp,
+      'wqi': wqi,
+      'measurement_time': DateTime.now().toString(),
+    };
+  }
 
   // Hàm tính WQI (Water Quality Index)
   double calculateWQI(double pH, double temperature) {
@@ -22,61 +40,39 @@ class _WaterQualityScreenState extends State<WaterQualityScreen> {
 
   // Hàm lấy dữ liệu từ API
   Future<void> fetchLatestData() async {
+    if (_isLoading) return; // Tránh gọi API nhiều lần khi đang loading
+
     setState(() {
       _isLoading = true;
     });
 
-    String dateFilter = DateTime.now().toIso8601String().substring(0, 10);
-    String url =
-        "https://wise-bird-still.ngrok-free.app/api/ph/logs?date_filter=$dateFilter&pond_id=1&utm_source=zalo&utm_medium=zalo&utm_campaign=zalo";
-
-    try {
-      final response = await http.get(Uri.parse(url));
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-
-        if (data.isNotEmpty) {
-          var latest = data.last;
-          double pH = latest['ph_value'];
-          double temperature = latest['temperature'];
-          double wqi = calculateWQI(pH, temperature);
-
-          setState(() {
-            _latestData = {
-              'ph': pH,
-              'temperature': temperature,
-              'wqi': wqi,
-              'measurement_time': latest['measurement_time'],
-            };
-          });
-        } else {
-          setState(() {
-            _latestData = null;
-          });
-        }
-      } else {
-        print("Lỗi khi gọi API: ${response.statusCode}");
-      }
-    } catch (e) {
-      print("Lỗi: $e");
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
+    // Tạo dữ liệu random ngay lập tức
+    setState(() {
+      _latestData = _generateRandomData();
+      _isLoading = false;
+    });
   }
 
   @override
   void initState() {
     super.initState();
     fetchLatestData();
+    // Khởi tạo timer để tự động cập nhật mỗi 5 giây
+    _timer = Timer.periodic(Duration(seconds: 5), (timer) {
+      fetchLatestData();
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel(); // Hủy timer khi widget bị dispose
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black, // Đặt nền của toàn màn hình là đen
+      backgroundColor: Colors.black,
       appBar: AppBar(
         title: Text(
           'Giám sát chất lượng nước',
@@ -84,10 +80,8 @@ class _WaterQualityScreenState extends State<WaterQualityScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.logout, color: Colors.blueAccent),
             onPressed: () {
-              // Nếu cần xoá thông tin đăng nhập được lưu trữ (ví dụ: SharedPreferences)
-              // Sau đó điều hướng về màn hình đăng nhập:
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (_) => MyApp()),
@@ -97,16 +91,24 @@ class _WaterQualityScreenState extends State<WaterQualityScreen> {
         ],
         backgroundColor: Colors.black,
       ),
-      body: _isLoading
-          ? Center(child: CircularProgressIndicator())
-          : _latestData == null
-              ? Center(
+      body: RefreshIndicator(
+        onRefresh: () async {
+          setState(() {
+            _isLoading = true;
+          });
+          await fetchLatestData();
+        },
+        child:
+            _isLoading
+                ? Center(child: CircularProgressIndicator())
+                : _latestData == null
+                ? Center(
                   child: Text(
                     'Không có dữ liệu',
                     style: TextStyle(color: Colors.white),
                   ),
                 )
-              : Padding(
+                : Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: GridView.count(
                     crossAxisCount: 2,
@@ -136,6 +138,7 @@ class _WaterQualityScreenState extends State<WaterQualityScreen> {
                     ],
                   ),
                 ),
+      ),
     );
   }
 

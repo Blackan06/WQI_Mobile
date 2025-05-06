@@ -9,6 +9,7 @@ import 'blocs/authentication/authentication_bloc.dart';
 import 'repositories/authentication_repository.dart';
 import 'noti_service.dart';
 import 'screens/login_screen.dart';
+import 'screens/notification_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,7 +45,8 @@ void main() async {
   // Lắng nghe thông báo khi ứng dụng ở foreground
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
     print(
-        'Foreground message: ${message.notification?.title}, ${message.notification?.body}');
+      'Foreground message: ${message.notification?.title}, ${message.notification?.body}',
+    );
     NotiService().showNotification(
       title: message.notification?.title,
       body: message.notification?.body,
@@ -70,9 +72,9 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 // Hàm gọi API đăng ký token
-Future<void> registerDeviceToken(String token, int user_id) async {
+Future<void> registerDeviceToken(String token, int account_id) async {
   final url = Uri.parse('https://dm.anhkiet.xyz/register-token');
-  final data = {'device_token': token, 'user_id': user_id};
+  final data = {'device_token': token, 'account_id': account_id};
   print('Gửi lên Server data: $data');
   final response = await http.post(
     url,
@@ -84,7 +86,8 @@ Future<void> registerDeviceToken(String token, int user_id) async {
     print('Device token registered successfully');
   } else {
     print(
-        'Failed to register device token. Status code: ${response.statusCode}');
+      'Failed to register device token. Status code: ${response.statusCode}',
+    );
   }
 }
 
@@ -96,13 +99,42 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Login ',
+      title: 'Login',
       theme: ThemeData.dark(),
-      // Khởi tạo LoginScreen ban đầu với BlocProvider
       home: BlocProvider(
         create: (context) => AuthenticationBloc(authRepository: authRepository),
         child: const LoginScreen(),
       ),
+    );
+  }
+}
+
+class HomeScreen extends StatelessWidget {
+  final int accountId;
+
+  const HomeScreen({Key? key, required this.accountId}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Home'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder:
+                      (context) => NotificationScreen(accountId: accountId),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+      body: const Center(child: Text('Welcome to the Home Screen')),
     );
   }
 }

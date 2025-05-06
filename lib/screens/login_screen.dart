@@ -21,16 +21,14 @@ class _LoginScreenState extends State<LoginScreen> {
   void _onLoginPressed() {
     // Gửi sự kiện login qua Bloc
     context.read<AuthenticationBloc>().add(
-          LoginRequested(_usernameController.text, _passwordController.text),
-        );
+      LoginRequested(_usernameController.text, _passwordController.text),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Đăng nhập'),
-      ),
+      appBar: AppBar(title: const Text('Đăng nhập')),
       body: BlocConsumer<AuthenticationBloc, AuthenticationState>(
         listener: (context, state) {
           if (state is AuthenticationSuccess) {
@@ -45,12 +43,14 @@ class _LoginScreenState extends State<LoginScreen> {
             // Chuyển sang màn hình có Bottom Navigation
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (_) => const BottomNavScreen()),
+              MaterialPageRoute(
+                builder: (_) => BottomNavScreen(accountId: userId),
+              ),
             );
           } else if (state is AuthenticationFailure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.error)),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.message)));
           }
         },
         builder: (context, state) {
@@ -61,11 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               // Hình icon từ assets
-              Image.asset(
-                'assets/images/water.png',
-                width: 150,
-                height: 150,
-              ),
+              Image.asset('assets/images/water.png', width: 150, height: 150),
               const SizedBox(height: 16),
               TextField(
                 controller: _usernameController,

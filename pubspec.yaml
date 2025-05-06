@@ -1,5 +1,5 @@
 name: wqi_mobile
-description: "A new Flutter project."
+description: "Ứng dụng giám sát chất lượng nước"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -32,6 +32,7 @@ dependencies:
     sdk: flutter
   http: ^1.3.0
   device_info_plus: ^11.3.3
+  intl: ^0.18.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

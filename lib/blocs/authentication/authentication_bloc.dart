@@ -9,7 +9,7 @@ class AuthenticationBloc
   final AuthenticationRepository authRepository;
 
   AuthenticationBloc({required this.authRepository})
-      : super(AuthenticationInitial()) {
+    : super(AuthenticationInitial()) {
     on<LoginRequested>(_onLoginRequested);
   }
 
@@ -18,11 +18,24 @@ class AuthenticationBloc
     Emitter<AuthenticationState> emit,
   ) async {
     emit(AuthenticationLoading());
-    final userId = await authRepository.login(event.username, event.password);
-    if (userId != null) {
-      emit(AuthenticationSuccess(userId));
-    } else {
-      emit(AuthenticationFailure("Tên đăng nhập hoặc mật khẩu không đúng"));
+    try {
+      final result = await authRepository.login(event.username, event.password);
+      if (result != null) {
+        emit(
+          AuthenticationSuccess(
+            accessToken: result.accessToken,
+            userId: result.account_id,
+          ),
+        );
+      } else {
+        emit(
+          const AuthenticationFailure(
+            message: "Tên đăng nhập hoặc mật khẩu không đúng",
+          ),
+        );
+      }
+    } catch (e) {
+      emit(AuthenticationFailure(message: e.toString()));
     }
   }
 }
