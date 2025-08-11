@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'home_screen.dart';
 import 'list_screen.dart';
 import 'notification_screen.dart';
+import 'grafana_dashboard_screen.dart';
 
 class BottomNavScreen extends StatefulWidget {
   final int accountId;
@@ -22,6 +23,7 @@ class _BottomNavScreenState extends State<BottomNavScreen> {
     _screens = [
       WaterQualityScreen(),
       MonitoringListScreen(),
+      GrafanaDashboardScreen(),
       NotificationScreen(accountId: widget.accountId),
     ];
   }
@@ -44,6 +46,10 @@ class _BottomNavScreenState extends State<BottomNavScreen> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.list), label: 'List'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard),
+            label: 'Dashboard',
+          ),
           BottomNavigationBarItem(
             icon: Icon(Icons.notifications),
             label: 'Notifications',

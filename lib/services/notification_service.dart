@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import '../models/notification_model.dart';
 
 class NotificationService {
-  static const String baseUrl = 'https://dm.anhkiet.xyz';
+  static const String baseUrl = 'https://datamanagerment.anhkiet.xyz';
 
   Future<List<NotificationModel>> getNotifications(int accountId) async {
     try {

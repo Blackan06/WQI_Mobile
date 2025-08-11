@@ -73,7 +73,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 // Hàm gọi API đăng ký token
 Future<void> registerDeviceToken(String token, int account_id) async {
-  final url = Uri.parse('https://dm.anhkiet.xyz/register-token');
+  final url = Uri.parse('https://datamanagerment.anhkiet.xyz/register-token');
   final data = {'device_token': token, 'account_id': account_id};
   print('Gửi lên Server data: $data');
   final response = await http.post(

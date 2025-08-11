@@ -12,7 +12,7 @@ class AuthResponse {
 class AuthenticationRepository {
   Future<AuthResponse?> login(String username, String password) async {
     try {
-      final url = Uri.parse('https://dm.anhkiet.xyz/login');
+      final url = Uri.parse('https://datamanagerment.anhkiet.xyz/login');
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
